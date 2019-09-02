@@ -1,0 +1,35 @@
+ #div_plot {
+	width: 90%;
+	height: 90%;
+	position: absolute;
+	/*border-style: solid;*/
+}
+
+.densPath {
+	fill: none;
+	stroke: rgba(12, 34, 231, 0.925);
+	stroke-width: 1px;
+	opacity: 0.8;
+	stroke-linejoin: round;
+}
+
+.densPathSel {
+	fill: red;
+	opacity: 0.5;
+	stroke: rgb(68, 67, 67);
+	stroke-width: 6px;
+	stroke-linejoin: round;
+}
+
+polygon:hover { 
+	stroke-width: 6px;
+	stroke: rgb(68, 67, 67);
+}
+
+.densPathInit {
+	fill-opacity: 0.8;
+}
+
+.densPathTemp {
+	fill-opacity: 0;
+}

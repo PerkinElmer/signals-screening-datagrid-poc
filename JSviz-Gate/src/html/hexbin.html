@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+
+
+<link rel="stylesheet" type="text/css" href="http://localhost:8080/src/css/pki-hexbin.css">
+
+<style>
+
+</style>
+
+<script name="jQuery.js" src="http://localhost:8080/lib/jQuery/jQuery.js" /></script>
+<script name="Introspection.js" src="http://localhost:8080/lib/JSViz/Introspection.js" /></script>
+<script name="d3.min.js" src="http://localhost:8080/lib/d3/d3.min.js"></script>
+<script name="d3-contour.min.js" src="http://localhost:8080/lib/d3/d3-contour.min.js"></script>
+<script name="d3-scale-chromatic.min.js"  src="http://localhost:8080/lib/d3/d3-scale-chromatic.min.js"></script>
+
+<script name="d3-lasso.min.js"  src="http://localhost:8080/lib/d3/d3-lasso.min.js"></script>
+<script name="d3-hexbin.v0.2.min.js"  src="http://localhost:8080/lib/d3/d3-hexbin.v0.2.min.js"></script>
+<script name="d3-polygon-utils.js"  src="http://localhost:8080/lib/d3/d3-polygon-utils.js"></script>
+
+
+<div style='position: absolute; width: 100%; height: 100%; top: 0px; left: 0px;' id="js_chart"></div>
+
+
+<script name="pki-hexbin.plot.js"  src="http://localhost:8080/src/js/pki-hexbin.plot.js"></script>
+
+<script name="pki-basic.plot.js">
+
+// ******************************************
+function loadData(csvFile) {
+
+    d3.csv(csvFile, function (d) {
+        d.x = +d.x;
+        d.y = +d.y;
+        return d;
+    }, 
+    function (error, data) {
+        if (error) throw error;
+
+        createPlot(data);
+
+    });
+}
+
+loadData("../../data/FCS_data.csv");
+
+// ******************************************
+
+
+
+</script>

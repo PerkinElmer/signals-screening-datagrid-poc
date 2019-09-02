@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<script name="jQuery.js" src="http://localhost:8080/lib/jQuery/jQuery.js" /></script>
+<script name="Introspection.js" src="http://localhost:8080/lib/JSViz/Introspection.js" /></script>
+<script name="d3.min.js" src="http://localhost:8080/lib/d3/d3.min.js"></script>
+<script name="d3-contour.min.js" src="http://localhost:8080/lib/d3/d3-contour.min.js"></script>
+<script name="d3-scale-chromatic.min.js"  src="http://localhost:8080/lib/d3/d3-scale-chromatic.min.js"></script>
+
+
+<div style='position: absolute; width: 100%; height: 100%; top: 0px; left: 0px;' id="js_chart"></div>
+
+
+<script name="pki-basic.plot.js">
+
+// ******************************************
+function loadData(csvFile) {
+
+    d3.csv(csvFile, function (d) {
+        d.x = +d.x;
+        d.y = +d.y;
+        return d;
+    }, 
+    function (error, data) {
+        if (error) throw error;
+
+        createPlot(data);
+
+    });
+}
+
+loadData("../../data/FCS_data.csv");
+
+// ******************************************
+
+function renderCore(sfdata) {
+    
+    let plotData = sfdata.data.map(function (p){
+        return {x: parseInt(p.items[0]), y: parseInt(p.items[1])};
+    });
+
+    createPlot(plotData);
+}
+
+
+function createPlot(plotData) {
+    // ******************************************************
+    // Settings
+    // ******************************************************
+    let margin = {top: 10, right: 0, bottom: 30, left: 50},
+        width = window.innerWidth,
+        height = window.innerHeight;
+
+    let x = d3.scaleLinear()
+        .domain([d3.min(plotData, function(d){ return d.x; }) / 1.2, d3.max(plotData, function(d){ return d.x; }) * 1.2])
+        .range([ 0, width ]);
+
+    let y = d3.scaleLinear()
+        .domain([d3.min(plotData, function(d){ return d.y; }) / 1.2, d3.max(plotData, function(d){ return d.y; }) * 1.2])
+        .range([ height, 0]);
+
+    let densityData = d3.contourDensity()
+        .x(function(d) { return x(d.x); })
+        .y(function(d) { return y(d.y); })
+        .size([width, height])
+        .bandwidth(15)
+        (plotData);
+
+    const color = d3.scaleSequential(d3.interpolateBuPu).domain([0, 1.5]); 
+
+    // ******************************************************
+    // svg
+    // ******************************************************
+    var svg = d3.select("#js_chart")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+
+    svg.append("g").attr("transform", "translate(" + margin.left + "," + height + ")").call(d3.axisBottom(x));
+    
+    svg.append("g")
+        .attr("transform", "translate(" + margin.left + ", 0)")
+        .call(d3.axisLeft(y));
+
+    
+    
+    
+   
+    svg.append('g')
+        .attr("transform", "translate(" + (16 * 2.1 +  margin.left) + ", " + 16 * -2.1 + ")") //TODO
+        .attr("id", "g_plot")
+        .selectAll("path")
+        .data(densityData)
+        .enter()
+            .append("path")
+            .attr("d", d3.geoPath())
+            .attr("fill", function(d) { return color(d.value); });
+
+
+    
+            
+}
+
+
+
+</script>

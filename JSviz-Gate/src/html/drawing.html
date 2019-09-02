@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+
+.sel_Shape{
+    stroke: 'red';
+    stroke-width: 6px;
+	stroke-linejoin: round;
+    opacity: 0.5;
+    fill: '#69a3b2';
+}
+  
+.selGatingShape {
+	fill: rgb(196, 235, 174);
+    fill-opacity: 0.5;
+    stroke-opacity: 0.8;
+	stroke: red;
+	stroke-width: 1px;
+	stroke-linejoin: round;
+}
+
+
+.circle_resize{
+    opacity: 0.5;
+    fill: 'blue';
+}
+</style>
+<body>
+
+<div style='position: absolute; width: 100%; height: 100%; top: 0px; left: 0px;' id="js_chart">
+    <div id="div_menu"></div>
+    <div id="div_plot"></div>
+</div>
+
+<script name="d3.min.js" src="http://localhost:8080/lib/d3/d3.min.js"></script>
+
+<script name="d3.min.js" src="http://localhost:8080/src/js/pki.selection.menu.js"></script>
+
+
+<script>
+
+let selGatingShape = 2;
+//===============================================================================================
+menu("#div_menu");
+//===============================================================================================
+
+let margin = {top: 10, right: 0, bottom: 30, left: 50},
+    width = window.innerWidth,
+    height = window.innerHeight;
+
+let svgPlot = d3.select("#div_plot")
+    .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .on("mousedown", mousedown)
+        .on("mouseup", mouseup);
+
+svgPlot.append('g')
+    .attr("id", "g_shape");
+
+
+let currentShape;
+let inShape = false;
+
+function mousedown() {
+    clear();
+    
+    let point = d3.mouse(this);
+    
+    if (!inShape){
+        d3.select("#g_shape").append("circle")
+        .attr("id", "initPoint")
+        .attr("cx", point[0])
+        .attr("cy", point[1])
+        .attr("r", 3)
+        .attr("fill", "red")
+        /*
+        .on("mouseover", function() {
+            d3.select(this).style("cursor", "move");
+        })
+        .on("mouseout", function() {
+            d3.select(this).style("cursor", "default"); 
+        })
+        */
+    }
+    
+
+	if (selGatingShape === 1){
+       //d3.select("#g_shape").selectAll("ellipse.selGatingShape").remove()
+       currentShape = d3.select("#g_shape").append("ellipse")
+            .attr("cx", point[0])
+            .attr("cy", point[1])
+            .attr("rx", 0)
+            .attr("ry", 0)
+            .attr("class", "selGatingShape")
+            .on("mouseover", function() {
+                inShape = true;
+                selGatingShape = 1;
+                //d3.select(this).style("cursor", "move");
+                d3.select(this).style("cursor", "pointer"); 
+            })
+    }
+    
+    if (selGatingShape === 2){
+        //d3.select("#g_shape").selectAll("rect.selGatingShape").remove()
+        currentShape = d3.select("#g_shape").append("rect")
+            .attr("x", point[0])
+            .attr("y", point[1])
+            .attr("height", 0)
+            .attr("width", 0)
+            .attr("class", "selGatingShape")
+            .on("mouseover", function() {
+                inShape = true;
+                selGatingShape = 2;
+                //d3.select(this).style("cursor", "move");
+                d3.select(this).style("cursor", "pointer"); 
+            })
+            /*
+        d3.select("#g_shape").append("circle")
+            .attr("id", "resizeCircle")
+            .attr("cx", point[0])
+            .attr("cy", point[1])
+            .attr("r", 10)
+            .attr("class", "circle_resize")
+            */
+    }
+
+    if (currentShape){
+        currentShape.on("mouseout", function() {
+            //console.log("out");
+            inShape = false;
+            d3.select(this).style("cursor", "default"); 
+        })
+        .call(d3.drag() 
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            //.on("end", dragended)
+            );
+    }
+
+    if (!inShape)
+        svgPlot.on("mousemove", mousemove);
+
+    
+}
+
+function mousemove() {
+    let point = d3.mouse(this);
+
+    if (selGatingShape === 1){
+        currentShape
+            .attr("rx", Math.max(0, point[0] - +currentShape.attr("cx")))
+            .attr("ry", Math.max(0, point[1] - +currentShape.attr("cy")));
+    }
+
+    if (selGatingShape === 2){
+        currentShape
+            .attr("width", Math.max(0, point[0] - +currentShape.attr("x")))
+            .attr("height", Math.max(0, point[1] - +currentShape.attr("y")))
+            
+        /*
+        let xW = Math.max(0, point[0] - +currentShape.attr("x"));
+        let yH = Math.max(0, point[1] - +currentShape.attr("y"))
+        
+        d3.select("#g_shape").selectAll(".circle_resize")
+            .attr("transform", "translate(" + xW  + ", " + yH + ")")
+            */
+            
+    }
+    
+}
+
+function mouseup() {
+    d3.select("#initPoint").remove();
+    svgPlot.on("mousemove", null);
+
+
+    /*
+    // Circle to resize
+    let point = d3.mouse(this);
+    if (selGatingShape === 2){
+        d3.select("#g_shape").append("circle")
+        .attr("id", "resizeCircle")
+        .attr("cx", point[0])
+        .attr("cy", point[1])
+        .attr("r", 10)
+        .attr("class", "circle_resize")
+        .on("mouseover", function() {
+           //d3.select(this).style("cursor", "se-resize");
+        })
+        .on("mouseout", function() {
+            //d3.select(this).style("cursor", "default"); 
+        })
+        .on("click", function() {
+            //alert("hola")
+            currentShape.attr("transform", "rotate(10)")
+            //d3.select(this).attr("stroke-with",2);
+        })
+        .on("mousedown", function() {
+            svgPlot.on("mousemove", null);
+            svgPlot.on("mousedown", null);
+            svgPlot.on("mousedown", null);
+            //d3.select(this).style("cursor", "default"); 
+        })
+        .on("mouseup", function() {
+            //d3.select(this).style("cursor", "default"); 
+        });
+    }
+    */
+}
+
+function dragstarted(d) {
+    d3.select(this).attr("stroke", "black");
+
+   
+}
+
+function dragged(d) {
+    let point = d3.mouse(this);
+    
+    if (selGatingShape === 1)
+        d3.select(this).attr("cx", point[0]).attr("cy", point[1]);
+
+    if (selGatingShape === 2)
+        d3.select(this).attr("x", point[0]).attr("y", point[1]);
+   
+
+    //d3.select(this).attr("transform", "translate(" + point[0] + "," + point[1] + ")")
+    
+}
+function dragended(d) {
+    d3.select(this).attr("stroke", "red");
+}
+
+function clear(){
+    d3.select("#g_shape").selectAll("ellipse.selGatingShape").remove();
+    d3.select("#g_shape").selectAll("rect.selGatingShape").remove();
+    d3.select("#g_shape").selectAll(".circle_resize").remove();
+}
+
+
+</script>
