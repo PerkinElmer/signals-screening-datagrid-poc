@@ -1,0 +1,103 @@
+<html>
+
+<script name="jQuery.js" src="http://localhost:8080/lib/jQuery/jquery-3.4.1.min.js" /></script>
+<script name="jquery.jexcel.js" src="http://localhost:8080/lib/jExcel/jquery.jexcel.js" /></script>
+<link rel="stylesheet" href="http://localhost:8080/lib/jExcel/jquery.jexcel.min.css" type="text/css" />
+
+<div id="js_chart"></div>
+
+<script>
+
+let sfdata = {
+  columns: ["Row_letter","Row","Column","type"],
+  baseTableHints: {rows: 9, tableName: "PlateDesign"},
+  data: [
+        {items: ["A","1","1","pos"], hints: {index: 0}},
+        {items: ["A","1","2","pos"], hints: {index: 1}},
+        {items: ["A","1","3","neg"], hints: {index: 2}},
+        {items: ["A","1","1","pos"], hints: {index: 3}},
+        {items: ["A","1","2","pos"], hints: {index: 4}},
+        {items: ["A","1","3","neg"], hints: {index: 5}},
+        {items: ["A","1","1","pos"], hints: {index: 6}},
+        {items: ["A","1","2","pos"], hints: {index: 7}},
+        {items: ["A","1","3","neg"], hints: {index: 8}},
+        {items: ["A","1","1","pos"], hints: {index: 9}},
+        {items: ["A","1","2","pos"], hints: {index: 10}},
+        {items: ["A","1","3","neg"], hints: {index: 11}},
+        {items: ["A","1","2","sample"], hints: {index: 12}},
+        {items: ["A","1","3","sample"], hints: {index: 13}},
+        {items: ["A","1","2","sample"], hints: {index: 14}},
+        {items: ["A","1","3","sample"], hints: {index: 15}},
+    ]
+}
+
+
+renderCore(sfdata);
+var data;
+
+function renderCore(sfdata){
+
+    let plotData = sfdata.data.map(function(p){
+        return p.items
+    })
+    data = plotData;
+    createPlot(plotData, sfdata);
+}
+
+function createPlot(plotData, sfdata){
+
+let divChart = document.getElementById("js_chart");
+divChart.innerHTML = "";
+
+var options = {
+    data: plotData,
+    colHeaders: sfdata.columns,
+    colWidths: sfdata.columns.map(function(p){return 150}),
+    /*
+    columns: [
+        sfdata.columns.map(function(p){
+            return { type: 'text' }
+        })
+    ]
+    */
+}
+
+$('#js_chart').jexcel(options); 
+
+//-------------------------------------
+//Update button
+//-------------------------------------
+document.createElement('button');
+const btUpdate = document.createElement('button');
+btUpdate.innerHTML = 'Update';
+btUpdate.onclick = function(){
+    let str = sfdata.columns.join(",") + "\n";
+    plotData.forEach(function(row){
+        str = str + row.join(",") + "\n";
+    })
+    console.log(str)
+
+    if (window.Spotfire){
+        try {
+            let	scriptInfo	= {
+                "ScriptName":"ReplaceTable",
+                "Arguments":{"table": "PlateDesign"}
+            };
+
+            window.Spotfire.modify("script", scriptInfo);
+        }
+        catch (ex) {
+            console.error(ex);
+        }
+    }
+};
+
+const divBt = document.createElement("div");
+divBt.appendChild(btUpdate);
+
+document.getElementById("js_chart").appendChild(divBt); 
+}
+
+
+</script>
+</html>

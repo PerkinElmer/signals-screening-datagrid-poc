@@ -1,0 +1,97 @@
+<html>
+
+<script name="jQuery.js" src="http://localhost:8080/lib/jQuery/jquery-3.4.1.min.js" /></script>
+<script name="jquery.jexcel.js" src="http://localhost:8080/lib/jExcel/jquery.jexcel.js" /></script>
+<link rel="stylesheet" href="http://localhost:8080/lib/jExcel/jquery.jexcel.min.css" type="text/css" />
+
+<div id="js_chart"></div>
+
+<script>
+
+let sfdata = {};
+
+renderCore(sfdata);
+
+function renderCore(sfdata){
+    
+    const nRows = 2;
+    const nCols = 3;
+    let plotData = new Array(nRows);
+
+    for (var i = 0; i < plotData.length; i++)
+        plotData[i] = new Array(nCols);
+    
+    createPlot(plotData);
+}
+
+function createPlot(plotData){
+
+let div = document.getElementById("js_chart");
+div.innerHTML = "";
+
+var options = {
+    data: plotData,
+    colWidths: Array(plotData[1].length).fill(100),
+}
+
+var table = $('#js_chart').jexcel(options); 
+
+//console.log("table: ", table);
+
+//-------------------------------------
+//Update button
+//-------------------------------------
+document.createElement('button');
+const btUpdate = document.createElement('button');
+btUpdate.innerHTML = 'Update';
+btUpdate.onclick = function(){
+    //$('#js_chart').jexcel('insertRow')
+    //$('#js_chart').jexcel('insertColumn')
+    
+    //let rowData = $('#js_chart').jexcel('getRowData')
+    //let colData = $('#js_chart').jexcel('getColumnData')
+   
+    let data = $('#js_chart').jexcel('getData')
+    const nRows = data.length;
+    const nCols = data[0].length;
+    let str = "Row,Column,Annotation\n";
+    for (let i = 0; i < nRows; i++){
+        for (let j = 0; j < nCols; j++){
+            str = str + (i + 1).toString() + "," + (j + 1).toString() + "," + data[i][j]  + "\n";
+        }
+    }
+    
+    console.log(str)
+    // console.log("allData: ", data)
+
+    if (window.Spotfire){
+        try {
+            let args = [
+                {"Key":"table", "Value":"PlateDesign"},
+                {"Key":"data", "Value":str},
+                {"Key":"action", "Value":2}
+            ];
+            let name = "ReplaceTable"
+            
+            let	scriptInfo	= {
+                "ScriptName": name,
+                "Arguments": args
+            };
+
+            window.Spotfire.modify("script", scriptInfo);
+        }
+        catch (ex) {
+            console.error(ex);
+        }
+    }
+};
+
+const divBt = document.createElement("div");
+divBt.appendChild(btUpdate);
+
+document.getElementById("js_chart").appendChild(divBt); 
+}
+
+
+</script>
+</html>
