@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html>
+<script src="dist/jexcel.js"></script>
+<link rel="stylesheet" href="dist/jexcel.css" type="text/css" />
+<script src="dist/jquery-3.4.1.js"></script>
+
+<script src="https://bossanova.uk/jsuites/v2/jsuites.js"></script>
+<link rel="stylesheet" href="https://bossanova.uk/jsuites/v2/jsuites.css" type="text/css" />
+
+<div id="spreadsheet"></div>
+
+<script>
+var data = [
+    [],
+    [],
+];
+
+    var g_startCell = [-1,  -1];
+    var selectionActive = function (instance, x1, y1, x2, y2, origin) {
+        console.log('selectionActive!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+        return;
+       var cellName1 = jexcel.getColumnNameFromId([x1, y1]);
+       var cellName2 = jexcel.getColumnNameFromId([x2, y2]);
+
+        console.log('x1/y1: ' + x1 + ', ' + y1 + ', ' + cellName1);
+        //console.log($(instance.jexcel.getCell([x1, y1])).offset());
+        console.log('x2/y2: ' + x2 + ', ' + y2 + ', ' + cellName2);        
+        //console.log($(instance.jexcel.getCell([x2, y2])).offset());
+
+        //var minColumn = Math.min(x1, x2);
+
+        //var offsetLeft = 0;
+        //for (var c = 0; c < minColumn; c++) {
+        //    offsetLeft += instance.jexcel.options.columns[c].width ? instance.jexcel.options.columns[c].width : instance.jexcel.options.defaultColWidth;
+        //}
+
+        //console.log('Offset left: ' + offsetLeft);
+
+        if ((x1 === x2) && (y1 === y2)) {
+            g_startCell = [x1, y1];
+
+            ensureVisibleCell(instance.jexcel.getCell([x1, y1]));
+        } // if ((x1 === x2) && (y1 === y2))
+        else {
+            if (x1 === x2) {
+                // Single column
+                console.log('Single column');
+            }
+            else {
+                if (y1 === y2) {
+                    // Single row
+                    console.log('Single row');
+
+                    // Find the last cell
+                    if ((g_startCell[0] === x1) && (g_startCell[1] === y1)) {
+                        ensureVisibleCell(instance.jexcel.getCell([x2, y2]));
+                    }
+                    else {
+                        if ((g_startCell[0] === x2) && (g_startCell[1] === y2)) {
+                            ensureVisibleCell(instance.jexcel.getCell([x1, y1]));
+                        }
+                        else {
+                            console.error('Can not detect the start cell.');
+                        }
+                    }
+                }
+                else {
+                    // Rectangular area has been selected
+                    g_startCell = [-1, -1];
+                }
+            }      
+        } // else if ((x1 === x2) && (y1 === y2))              
+
+        //var cell1Rect = instance.jexcel.getCell([x1, y1]).getBoundingClientRect();        
+        //var cell2Rect = instance.jexcel.getCell([x2, y2]).getBoundingClientRect();
+        //console.log(cell2Rect);
+
+        //$('html, body').scrollTop(0).scrollLeft(0);
+        //$('html, body');
+
+        //console.log('OLD $(window).scrollLeft: ' + $(window).scrollLeft());
+        //console.log('OLD $(window).width: ' + $(window).width());
+        //$(window).scrollLeft(Math.abs($(window).width() - $(window).scrollLeft() - cell2Rect.x));
+        //console.log('OLD $(window).scrollTop: ' + $(window).scrollTop());
+        //$('html, body').scrollTop(cell2Rect.height * (y2 + 1));
+        //$('html, body').scrollLeft(cell2Rect.width * (x2 + 1));
+        //$('.jexcel_container').scrollTop(cell2Rect.height * (y2 + 1));
+        //console.log('NEW $(window).scrollTop: ' + $(window).scrollTop());
+
+        //$('html, body').animate({
+        //  scrollTop: cell2Rect.y, scrollLeft: cell2Rect.x
+        //}, 1100);
+
+        //$('html, body').animate({
+        //  scrollTop: cell2Rect.y, scrollLeft: cell2Rect.x
+        //}, 500);
+
+        //instance.jexcel.updateSelection(cellName1, cellName2, true);
+        //preventDefault();
+        //instance.jexcel.updateCornerPosition();
+        //$('#log').append('The selection from ' + cellName1 + ' to ' + cellName2 + '');
+    }
+
+    function getDocHeight() {
+        var doc = document;
+        return Math.max(
+            Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight),
+            Math.max(doc.body.offsetHeight, doc.documentElement.offsetHeight),
+            Math.max(doc.body.clientHeight, doc.documentElement.clientHeight)
+        );
+    }
+
+
+    var g_scrollTimeoutHandler = -1;
+    const SCROLL_TIMEOUT = 200;
+    function ensureVisibleCell(instance, x, y) {
+        if (g_scrollTimeoutHandler !== -1) {
+            clearTimeout(g_scrollTimeoutHandler);
+            g_scrollTimeoutHandler = -1;
+        }
+
+        var cell = instance.jexcel.getCell([x, y]);
+        var cellRect = cell.getBoundingClientRect();
+
+        /**
+         * Right/Left sides
+         */
+        var windowXLeft = $(window).scrollLeft();
+        var windowXRight = $(window).scrollLeft() + $(window).width();
+        console.log('Window Left/Right: ' + windowXLeft + ', ' + windowXRight);
+
+        var cellXLeft = $(window).scrollLeft() + cellRect.x;
+        var cellXRight = $(window).scrollLeft() + cellRect.x + cellRect.width;
+        console.log('Cell Left/Right: ' + cellXLeft + ', ' + cellXRight);
+        
+        if ((cellXRight > windowXRight) && (cellXLeft < windowXLeft)) {
+            // The cell is partially shown - both left and right sides are hidden
+            return;
+        }        
+
+        // Check the right side
+        if (cellXRight >= windowXRight) {
+            var scrollPadding = 0;
+            var nextRightColumn = parseInt(x) + 1;
+            if (nextRightColumn < instance.jexcel.options.columns.length) {
+                // Take 50% of the next column
+                scrollPadding = instance.jexcel.options.columns[nextRightColumn].width ? instance.jexcel.options.columns[nextRightColumn].width : instance.jexcel.options.defaultColWidth;
+                scrollPadding /= 2;
+            }
+
+            console.log('OLD $(window).scrollLeft: ' + $(window).scrollLeft());
+
+            g_scrollTimeoutHandler = setTimeout(function () {
+                $(window).scrollLeft(scrollPadding + $(window).scrollLeft() + cellRect.width - (windowXRight - cellXLeft));
+            }, SCROLL_TIMEOUT);
+
+            console.log('NEW $(window).scrollLeft: ' + $(window).scrollLeft());
+
+            return;
+        }
+        else {
+            // Check the left side
+            if (cellXLeft <= windowXLeft) {
+                var scrollPadding = 0;
+                var nextLeftColumn = parseInt(x) - 1;
+                if (nextLeftColumn >= 0) {
+                    // Take 50% of the next column
+                    scrollPadding = instance.jexcel.options.columns[nextLeftColumn].width ? instance.jexcel.options.columns[nextLeftColumn].width : instance.jexcel.options.defaultColWidth;
+                    scrollPadding /= 2;
+                }
+                                
+                console.log('OLD $(window).scrollLeft: ' + $(window).scrollLeft());
+
+                g_scrollTimeoutHandler = setTimeout(function () {
+                    $(window).scrollLeft(-scrollPadding + $(window).scrollLeft() - cellRect.width - (windowXLeft - cellXRight));
+                }, SCROLL_TIMEOUT);
+
+                console.log('NEW $(window).scrollLeft: ' + $(window).scrollLeft());
+
+                return;
+            }
+        }
+
+        /**
+         * Bottom/Top sides
+         */
+        const DEFAULT_ROW_HEIGHT = 26;
+
+        var headerHeight = $('#spreadsheet').offset().top;
+        headerHeight += DEFAULT_ROW_HEIGHT;
+
+        var windowYTop = headerHeight + $(window).scrollTop();
+        var windowYBottom = $(window).scrollTop() + $(window).height();
+        console.log('Window Top/Bottom: ' + windowYTop + ', ' + windowYBottom);
+
+        var cellYTop = $(window).scrollTop() + cellRect.y;
+        var cellYBottom = $(window).scrollTop() + cellRect.y + cellRect.height;
+        console.log('Cell Top/Bottom: ' + cellYTop + ', ' + cellYBottom);
+
+        if ((cellYBottom > windowYBottom) && (cellYTop < windowYTop)) {
+            // The cell is partially shown - both top and bottom sides are hidden
+            return;
+        }  
+
+        // Check the bottom side
+        if (cellYBottom >= windowYBottom) {            
+            var scrollPadding = 0;
+            var nextBottomRow = parseInt(y) + 1;
+            if (nextBottomRow < instance.jexcel.rows.length) {
+                // Take 50% of the next row
+                scrollPadding = instance.jexcel.rows[nextBottomRow].width ? instance.jexcel.rows[nextBottomRow].width : DEFAULT_ROW_HEIGHT;
+                scrollPadding /= 2;
+            }
+
+            console.log('OLD $(window).scrollTop: ' + $(window).scrollTop());
+
+            g_scrollTimeoutHandler = setTimeout(function () {
+                $(window).scrollTop(scrollPadding + $(window).scrollTop() + cellRect.height - (windowYBottom - cellYTop));
+            }, SCROLL_TIMEOUT);
+
+            console.log('NEW $(window).scrollTop: ' + $(window).scrollTop());
+
+            return;
+        }
+        else {
+            // Check the top side
+            if (cellYTop <= windowYTop) {
+                var scrollPadding = 0;
+                var nextTopRow = parseInt(y) - 1;
+                if (nextTopRow >= 0) {
+                    // Take 50% of the next row
+                    scrollPadding = instance.jexcel.rows[nextTopRow].width ? instance.jexcel.rows[nextTopRow].width : DEFAULT_ROW_HEIGHT;
+                    scrollPadding /= 2;
+                }
+
+                console.log('OLD $(window).scrollTop: ' + $(window).scrollTop());
+
+                g_scrollTimeoutHandler = setTimeout(function () {
+                    $(window).scrollTop(-scrollPadding + $(window).scrollTop() - cellRect.height - (windowYTop - cellYBottom));
+                }, SCROLL_TIMEOUT);
+
+                console.log('NEW $(window).scrollTop: ' + $(window).scrollTop());
+
+                return;
+            }
+        }
+
+        /**
+         * Other cases?
+         */
+    }
+
+    //var beforeChange = function (instance, cell, x, y, value) {
+    //    //var cellName = jexcel.getColumnNameFromId([x, y]);
+    //    //console.log('beforeChange: ' + x + ', ' + y);
+
+    //    //if ((g_startCell[0] === -1) && (g_startCell[1] === -1)) {
+    //    //    g_startCell = [x, y];
+    //    //}
+    //}
+
+    // Event handler
+    var onCopyEvent = function (instance, x, y) {
+        var cellName = jexcel.getColumnNameFromId([x, y]);
+        console.log('onCopyEvent: ' + x + ', ' + y);
+
+        ensureVisibleCell(instance, x, y);
+}
+
+jexcel(document.getElementById('spreadsheet'), {
+    data:data,
+    columns: [
+        { type: 'text' },
+        { type: 'text' },
+        { type: 'text' },
+        { type: 'text' },
+        { type: 'text' },
+        { type: 'text' },
+        { type: 'text' },
+     ],
+    minDimensions: [50, 50],
+    //onselection: selectionActive,
+    oncopy: onCopyEvent,
+    //onbeforechange: beforeChange,
+    defaultColWidth: 100
+    //tableHeight: 1000,
+    //tableWidth: $('body').width(),
+    //tableOverflow: true
+    //fullScreen: true,
+     //
+});
+</script>
+</html>
